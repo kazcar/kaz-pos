@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<title>咔滋餐車POS</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#f0f2f5;--panel:#ffffff;--panel2:#f8f9fa;
+  --acc:#e67e22;--acc2:#d35400;--grn:#27ae60;--red:#e74c3c;
+  --blu:#2980b9;--pur:#8e44ad;--dark:#2c3e50;
+  --t1:#2c3e50;--t2:#5d6d7e;--t3:#95a5a6;
+  --bd:#dde1e7;--bd2:#c8cfd8;
+  --r:10px;--rs:7px;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-family:'Noto Sans TC',sans-serif;font-size:14px}
+button{cursor:pointer;font-family:'Noto Sans TC',sans-serif;border:none}
+input,textarea,select{font-family:'Noto Sans TC',sans-serif;outline:none;color:var(--t1)}
+
+/* NAV */
+#nav{display:flex;align-items:center;background:var(--dark);height:52px;padding:0 12px;gap:6px;flex-shrink:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.logo{font-size:16px;font-weight:700;color:#f39c12;margin-right:10px;white-space:nowrap}
+.nb{padding:8px 16px;border-radius:20px;background:transparent;color:#bdc3c7;font-size:13px;font-weight:500;transition:.15s;border:1px solid transparent}
+.nb:hover{background:rgba(255,255,255,.1);color:#fff}
+.nb.active{background:var(--acc);color:#fff;font-weight:700}
+#nav-date{font-size:12px;color:#7f8c8d;margin-left:auto;white-space:nowrap}
+.bt-status{font-size:11px;padding:4px 10px;border-radius:12px;background:rgba(231,76,60,.2);color:#e74c3c;cursor:pointer;border:1px solid rgba(231,76,60,.3);white-space:nowrap;transition:.2s}
+.bt-status.on{background:rgba(39,174,96,.2);color:#27ae60;border-color:rgba(39,174,96,.3)}
+.bt-status:hover{opacity:.8}
+
+/* PAGES */
+.pg{display:none;height:calc(100vh - 52px);overflow:hidden}
+.pg.active{display:flex}
+#pg-order{flex-direction:row}
+#pg-om,#pg-pre{flex-direction:row}
+#pg-mgmt,#pg-rpt{flex-direction:column;padding:10px;gap:8px;overflow-y:auto}
+
+/* ═══ ORDER PAGE ═══ */
+.op-left{width:320px;min-width:260px;background:var(--panel);border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden}
+.op-right{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+
+.panel-hd{padding:10px 14px 6px;font-size:11px;font-weight:700;color:var(--t3);letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.panel-hd .hint{font-size:11px;color:var(--acc);font-weight:500;text-transform:none;letter-spacing:0}
+
+/* Product list */
+.prod-list{overflow-y:auto;flex:1;padding:4px 8px 8px}
+.pi{display:flex;align-items:center;padding:11px 12px;border-radius:var(--rs);margin-bottom:4px;cursor:pointer;border:1.5px solid var(--bd);background:var(--panel);transition:.12s;gap:8px}
+.pi:active{transform:scale(.97)}
+.pi:hover{background:#fef9f0;border-color:var(--acc)}
+.pi.so{opacity:.35;cursor:not-allowed;background:#f8f8f8}
+.pi-left{flex:1;min-width:0}
+.pi-name{font-size:14px;font-weight:500;color:var(--t1)}
+.pi-stock{font-size:11px;color:var(--t3);margin-top:2px}
+.pi-price{font-size:16px;font-weight:700;color:var(--acc);white-space:nowrap}
+
+/* Right panel layout */
+.co-top{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:6px 12px 4px}
+.seq-display{display:flex;align-items:center;gap:10px;background:var(--panel);border:1.5px solid var(--bd);border-radius:var(--rs);padding:6px 12px;margin-bottom:6px;flex-shrink:0}
+.seq-label{font-size:12px;color:var(--t3);font-weight:700;white-space:nowrap}
+.seq-value{font-size:20px;font-weight:700;color:var(--acc)}
+
+.cart-scroll{flex:1;overflow-y:auto;min-height:0;background:var(--panel);border:1.5px solid var(--bd);border-radius:var(--rs);padding:6px 8px;margin-bottom:6px}
+.cart-empty{padding:20px;text-align:center;color:var(--t3);font-size:13px}
+.ci{display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--bd)}
+.ci:last-child{border-bottom:none}
+.ci-name{flex:1;font-size:14px;font-weight:500}
+.qc{display:flex;align-items:center;gap:6px}
+.qb{width:30px;height:30px;border-radius:6px;font-size:18px;display:flex;align-items:center;justify-content:center;transition:.1s;font-weight:700}
+.qb-m{background:#fde8e8;color:var(--red);border:1px solid #f5c6c6}
+.qb-m:active{background:var(--red);color:#fff}
+.qb-p{background:#e8f5e9;color:var(--grn);border:1px solid #c8e6c9}
+.qb-p:active{background:var(--grn);color:#fff}
+.qn{font-size:15px;font-weight:700;min-width:26px;text-align:center;color:var(--t1)}
+.ci-sub{font-size:14px;font-weight:700;color:var(--acc);min-width:56px;text-align:right}
+
+.meta-area{display:flex;align-items:center;gap:8px;flex-shrink:0;margin-bottom:4px}
+.meta-field{display:flex;align-items:center;flex:1}
+.meta-field label{font-size:12px;font-weight:700;color:var(--t2);white-space:nowrap;margin-right:6px;flex-shrink:0}
+.meta-inp{flex:1;padding:6px 8px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--panel);font-size:13px;resize:none}
+.meta-inp:focus{border-color:var(--acc)}
+
+/* Total + action row */
+.co-bottom{flex-shrink:0;padding:0 12px 6px;display:flex;flex-direction:column;gap:4px}
+.total-line{display:flex;justify-content:space-between;align-items:center;padding:5px 12px;background:var(--panel);border-radius:var(--rs);border:1.5px solid var(--bd)}
+.total-lbl{font-size:14px;font-weight:700;color:var(--t2)}
+.total-val{font-size:22px;font-weight:700;color:var(--acc)}
+.act-row{display:flex;gap:8px}
+.co-btn{flex:2;padding:11px;background:var(--grn);color:#fff;border-radius:var(--r);font-size:15px;font-weight:700;transition:.12s;box-shadow:0 2px 6px rgba(39,174,96,.3)}
+.co-btn:active{background:#219a52;transform:scale(.98)}
+.hold-btn{flex:1;padding:11px;background:var(--acc);color:#fff;border-radius:var(--r);font-size:14px;font-weight:700;box-shadow:0 2px 6px rgba(230,126,34,.3)}
+.hold-btn:active{background:var(--acc2)}
+.edit-badge{display:none;font-size:11px;color:#fff;margin-left:8px;padding:2px 8px;background:var(--blu);border-radius:10px;font-weight:normal;vertical-align:middle}
+
+/* Numpad */
+.numpad-area{flex-shrink:0;padding:0 12px 6px}
+.pay-info{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px}
+.pay-box{background:var(--panel);border:1.5px solid var(--bd);border-radius:var(--rs);padding:4px 10px;display:flex;align-items:center;justify-content:space-between}
+.pay-box label{font-size:12px;color:var(--t3);font-weight:700;white-space:nowrap}
+.pay-box .pv{font-size:18px;font-weight:700;color:var(--t1);text-align:right}
+.pay-box .pv.pos{color:var(--grn)}.pay-box .pv.neg{color:var(--red)}
+.npg{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.npb{padding:8px 4px;border-radius:var(--rs);background:var(--panel);color:var(--t1);font-size:15px;font-weight:600;text-align:center;transition:.1s;border:1.5px solid var(--bd);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.npb:active{background:var(--dark);color:#fff;transform:scale(.94)}
+.npb-clr{background:#fde8e8;color:var(--red);border-color:#f5c6c6}
+.npb-clr:active{background:var(--red);color:#fff}
+.npb-bk{background:#f0f0f0;color:var(--t2)}
+
+/* ═══ ORDER MGMT PAGE ═══ */
+.om-left{width:55%;background:var(--panel);border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden}
+.om-right{flex:1;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;padding:10px;gap:8px}
+.om-sec{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:8px 10px}
+
+.sort-bar{display:flex;gap:5px;flex-shrink:0;margin-bottom:8px;flex-wrap:wrap}
+.sb{padding:6px 12px;border-radius:16px;background:var(--panel2);color:var(--t2);font-size:12px;font-weight:500;border:1.5px solid var(--bd);transition:.15s}
+.sb:hover{border-color:var(--acc);color:var(--acc)}
+.sb.active{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:700}
+
+.wc{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--panel);margin-bottom:5px;transition:.2s}
+.wc.overdue{border-color:var(--red)!important;animation:redpulse 1.2s ease-in-out infinite}
+@keyframes redpulse{0%,100%{box-shadow:0 0 0 0 rgba(231,76,60,.4)}50%{box-shadow:0 0 0 6px rgba(231,76,60,.1)}}
+.wc-no{font-weight:700;color:var(--acc);font-size:17px;min-width:48px;line-height:1.3;flex-shrink:0}
+.wc-body{flex:1;min-width:0}
+.wc-sum{font-size:13px;color:var(--t1);line-height:1.5;word-break:break-all;font-weight:500}
+.wc-meta{font-size:15px;color:var(--acc);font-weight:700;margin-top:3px;line-height:1.4}
+.wc-amt{font-size:14px;font-weight:700;color:var(--acc);margin-top:4px}
+.wc-btns{display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+.btn-serve{padding:8px 14px;border-radius:6px;background:var(--grn);color:#fff;font-size:13px;font-weight:700;white-space:nowrap;box-shadow:0 1px 4px rgba(39,174,96,.3)}
+.btn-serve:active{background:#219a52}
+.btn-edit2{padding:8px 14px;border-radius:6px;background:var(--blu);color:#fff;font-size:13px;font-weight:700;white-space:nowrap;box-shadow:0 1px 4px rgba(41,128,185,.3)}
+.btn-edit2:active{opacity:.8}
+
+.done-list{flex:1;overflow-y:auto;min-height:0;background:var(--panel);border-radius:var(--rs);border:1.5px solid var(--bd)}
+.dc{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-bottom:1px solid var(--bd)}
+.dc:last-child{border-bottom:none}
+.dc-no{font-weight:700;color:var(--grn);font-size:15px;min-width:48px;flex-shrink:0}
+.dc-body{flex:1;min-width:0}
+.dc-sum{font-size:13px;color:var(--t1);line-height:1.5;word-break:break-all}
+.dc-meta{font-size:15px;color:var(--acc);font-weight:700;margin-top:2px}
+.dc-amt{font-weight:700;color:var(--t1);min-width:52px;text-align:right;font-size:14px}
+.dc-btns{display:flex;flex-direction:column;gap:4px;flex-shrink:0;margin-left:6px}
+.btn-unserve{padding:5px 10px;border-radius:5px;background:#fef3e2;color:var(--acc);border:1.5px solid var(--acc);font-size:11px;font-weight:700;white-space:nowrap}
+.btn-unserve:active{background:var(--acc);color:#fff}
+.btn-reprint{padding:5px 10px;border-radius:5px;background:#e8f4fd;color:var(--blu);border:1.5px solid var(--blu);font-size:11px;font-weight:700;white-space:nowrap}
+.btn-reprint:active{background:var(--blu);color:#fff}
+.bdg{display:inline-block;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;margin-right:4px;flex-shrink:0}
+.bdg-done{background:#e8f5e9;color:var(--grn)}
+.bdg-pend{background:#fef3e2;color:var(--acc)}
+
+/* ═══ PRE-ORDER PAGE ═══ */
+.pre-left{flex:1;background:var(--panel);display:flex;flex-direction:column;overflow:hidden;padding:8px 10px}
+.hc{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border:1.5px solid #c39bd3;border-radius:var(--rs);background:#fdf2ff;margin-bottom:5px;transition:.2s}
+.hc.hc-alert{border-color:var(--red)!important;background:#fff5f5;animation:redpulse 1.2s ease-in-out infinite}
+.hc-no{font-weight:700;color:var(--pur);font-size:17px;min-width:48px;line-height:1.3;flex-shrink:0}
+.hc-body{flex:1;min-width:0}
+.hc-sum{font-size:13px;color:var(--t1);line-height:1.5;word-break:break-all;font-weight:500}
+.hc-meta{font-size:15px;color:var(--acc);font-weight:700;margin-top:3px;line-height:1.4}
+.hc-pickup{color:var(--acc2);font-weight:700}
+.hc-amt{font-size:14px;font-weight:700;color:var(--acc);margin-top:4px}
+.btn-prep{padding:10px 14px;border-radius:6px;background:var(--acc);color:#fff;font-size:13px;font-weight:700;white-space:nowrap;align-self:center;flex-shrink:0;box-shadow:0 1px 4px rgba(230,126,34,.3)}
+.btn-prep:active{background:var(--acc2)}
+
+/* ═══ MGMT PAGE ═══ */
+.mg-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;flex:1;min-height:0}
+.card{background:var(--panel);border:1.5px solid var(--bd);border-radius:var(--r);padding:14px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.card-ttl{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px;flex-shrink:0}
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.fg label{font-size:11px;color:var(--t2);font-weight:700}
+.fg input{padding:9px 11px;border:1.5px solid var(--bd);border-radius:6px;background:var(--panel2);font-size:14px;transition:.12s}
+.fg input:focus{border-color:var(--acc)}
+.btn-pri{padding:9px 18px;background:var(--acc);color:#fff;border-radius:6px;font-size:13px;font-weight:700}
+.btn-sec{padding:9px 13px;background:var(--panel2);color:var(--t2);border:1.5px solid var(--bd);border-radius:6px;font-size:13px}
+.pm-scroll{overflow-y:auto;flex:1}
+.pm-row{display:flex;align-items:center;gap:6px;padding:9px 2px;border-bottom:1px solid var(--bd)}
+.pm-row .pm-name{flex:1;font-size:14px;font-weight:500}
+.pm-row .pm-price{color:var(--acc);min-width:52px;font-size:13px;font-weight:700}
+.pm-row .pm-stock{font-size:11px;color:var(--t3);min-width:60px}
+.btn-ed{padding:5px 10px;border:1.5px solid var(--bd);border-radius:4px;color:var(--t2);background:var(--panel2);font-size:11px}
+.btn-dl{padding:5px 10px;border:1.5px solid #f5c6c6;border-radius:4px;color:var(--red);background:#fde8e8;font-size:11px}
+
+/* ═══ REPORT PAGE ═══ */
+.rpt-topbar{display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
+.rpt-topbar label{font-size:12px;color:var(--t2);font-weight:700}
+select{padding:8px 12px;border:1.5px solid var(--bd);border-radius:6px;background:var(--panel);color:var(--t1);cursor:pointer;font-size:13px}
+.store-btns{display:flex;gap:8px;margin-left:auto}
+.btn-open{padding:9px 20px;background:var(--grn);color:#fff;border-radius:6px;font-size:14px;font-weight:700;box-shadow:0 2px 6px rgba(39,174,96,.3)}
+.btn-open:active{background:#219a52}
+.btn-close{padding:9px 20px;background:var(--red);color:#fff;border-radius:6px;font-size:14px;font-weight:700;box-shadow:0 2px 6px rgba(231,76,60,.3)}
+.btn-close:active{background:#c0392b}
+.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;flex-shrink:0}
+.sc{background:var(--panel);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.sv{font-size:26px;font-weight:700;color:var(--acc)}
+.sl{font-size:11px;color:var(--t3);margin-top:2px;font-weight:500}
+.rpt-tables{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;min-height:0}
+.rpt-tbl-wrap{background:var(--panel);border:1.5px solid var(--bd);border-radius:var(--r);overflow-y:auto;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.tbl-ttl{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.8px;text-transform:uppercase;padding:10px 12px 6px;border-bottom:1px solid var(--bd);background:var(--panel2)}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:7px 12px;background:var(--panel2);font-size:11px;font-weight:700;color:var(--t3);position:sticky;top:0;border-bottom:1px solid var(--bd)}
+td{padding:7px 12px;border-bottom:1px solid var(--bd);font-size:13px}
+
+/* ═══ RECEIPT MODAL ═══ */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+.mbox{background:#fff;border-radius:var(--r);padding:20px;width:100%;max-width:360px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.mbox h2{font-size:15px;font-weight:700;margin-bottom:4px;letter-spacing:1px;color:var(--dark)}
+.r-no-big{font-size:64px;font-weight:700;color:var(--acc);line-height:1;margin:8px 0}
+.r-sub{font-size:11px;color:var(--t3);margin-bottom:10px}
+.r-items{text-align:left;font-size:13px;margin-bottom:8px}
+.ri{display:flex;gap:4px;padding:4px 0;border-bottom:1px solid var(--bd)}
+.ri .rn{flex:1}.ri .rq{color:var(--t2);min-width:28px;text-align:center}
+.ri .rs{font-weight:700;color:var(--acc);min-width:52px;text-align:right}
+.r-total{display:flex;justify-content:space-between;padding:8px 0 3px;font-weight:700;font-size:16px;border-top:1.5px solid var(--bd)}
+.r-paid{font-size:12px;color:var(--t2);margin-top:3px}
+.r-change{font-size:15px;font-weight:700;color:var(--grn);margin-top:2px}
+.r-note{font-size:12px;color:var(--pur);margin-top:4px}
+.mbtns{display:flex;gap:8px;margin-top:14px;justify-content:center;flex-wrap:wrap}
+.mbtns button{padding:10px 16px;border-radius:6px;font-size:13px;font-weight:700}
+.btn-btp{background:var(--blu);color:#fff}
+.btn-print{background:var(--acc);color:#fff}
+.btn-close2{background:var(--panel2);color:var(--t2);border:1.5px solid var(--bd)}
+
+/* ═══ ALERT MODAL ═══ */
+.alert-ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px}
+.alert-box{background:#fff;border:3px solid var(--red);border-radius:var(--r);padding:22px;max-width:440px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.25)}
+.alert-box h2{color:var(--red);font-size:18px;margin-bottom:6px;text-align:center}
+.alert-time{font-size:28px;font-weight:700;color:var(--acc);text-align:center;margin:4px 0 12px}
+.ao{padding:8px 12px;border:1.5px solid var(--bd);border-radius:6px;margin-bottom:6px;background:var(--panel2)}
+.ao-no{font-weight:700;color:var(--pur);font-size:15px}
+.ao-sum{color:var(--t2);margin-top:3px;line-height:1.4;font-size:13px}
+.ao-note{font-size:12px;color:var(--t3);margin-top:2px}
+
+/* SHARED */
+.empty{padding:20px;text-align:center;color:var(--t3);font-size:13px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--dark);color:#fff;padding:10px 24px;border-radius:20px;font-size:13px;z-index:400;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div id="nav">
+  <span class="logo">咔滋餐車POS</span>
+  <button class="nb active" onclick="showPg('order')">點餐</button>
+  <button class="nb" onclick="showPg('om')">訂單管理</button>
+  <button class="nb" onclick="showPg('pre')">預訂單</button>
+  <button class="nb" onclick="showPg('mgmt')">管理</button>
+  <button class="nb" onclick="showPg('rpt')">報表</button>
+  <button class="nb" onclick="showPg('settings')">設定</button>
+  <span class="bt-status" id="bt-status" onclick="btConnect()">印表機：未連線</span>
+  <span id="sync-status" style="font-size:11px;margin-left:4px;white-space:nowrap">⟳ 載入中</span><span id="nav-date"></span>
+</div>
+
+<!-- ORDER PAGE -->
+<div id="pg-order" class="pg active">
+  <div class="op-left">
+    <div class="panel-hd">商品列表 <span class="hint">點一下加入</span></div>
+    <div class="prod-list" id="prod-list"></div>
+  </div>
+  <div class="op-right">
+    <div class="co-top">
+      <div class="seq-display">
+        <div class="seq-label">訂單流水號</div>
+        <div class="seq-value" id="order-seq-display">尚未結帳</div>
+      </div>
+      <div class="cart-scroll" id="cart-list"><div class="cart-empty">尚未選擇商品</div></div>
+      <div class="meta-area">
+        <div class="meta-field">
+          <label>備註</label>
+          <input class="meta-inp" id="note-inp" placeholder="備註..." maxlength="20" style="max-width:130px">
+        </div>
+        <div class="meta-field" style="flex:none">
+          <label>取餐</label>
+          <input class="meta-inp" id="pickup-inp" type="time" style="width:110px">
+        </div>
+      </div>
+    </div>
+    <div class="co-bottom">
+      <div class="total-line">
+        <span class="total-lbl">總價</span>
+        <span class="total-val" id="cart-total">$0</span>
+      </div>
+      <div class="act-row">
+        <button class="hold-btn" onclick="doHold()">暫存</button>
+        <button class="co-btn" id="co-btn" onclick="doCheckout()">結帳 <span class="edit-badge" id="edit-badge">編輯中</span></button>
+      </div>
+    </div>
+    <div class="numpad-area">
+      <div class="pay-info">
+        <div class="pay-box"><label>客付</label><div class="pv" id="pay-disp">$0</div></div>
+        <div class="pay-box"><label>找零</label><div class="pv" id="chg-disp">$0</div></div>
+      </div>
+      <div class="npg" id="npg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ORDER MGMT PAGE -->
+<div id="pg-om" class="pg">
+  <div class="om-left">
+    <div class="om-sec">
+      <div class="panel-hd" style="padding:0 0 6px">等候出餐</div>
+      <div class="sort-bar" id="wait-sort">
+        <button class="sb active" onclick="setWaitSort(this,'seq')">單號↑</button>
+        <button class="sb" onclick="setWaitSort(this,'seq-d')">單號↓</button>
+        <button class="sb" onclick="setWaitSort(this,'time')">時間↑</button>
+        <button class="sb" onclick="setWaitSort(this,'time-d')">時間↓</button>
+        <button class="sb" onclick="setWaitSort(this,'amt')">金額↓</button>
+        <button class="sb" onclick="setWaitSort(this,'pickup')">取餐時間</button>
+        <button class="sb" onclick="setWaitSort(this,'note')">備註</button>
+      </div>
+      <div id="wait-list" style="overflow-y:auto;flex:1"></div>
+    </div>
+  </div>
+  <div class="om-right">
+    <div class="panel-hd" style="padding:0 0 6px">已完成訂單</div>
+    <div class="done-list" id="done-list"></div>
+  </div>
+</div>
+
+<!-- PRE-ORDER PAGE -->
+<div id="pg-pre" class="pg">
+  <div class="pre-left">
+    <div class="panel-hd" style="padding:0 0 6px">預訂單列表</div>
+    <div class="sort-bar" id="pre-sort">
+      <button class="sb active" onclick="setPreSort(this,'time')">時間↑</button>
+      <button class="sb" onclick="setPreSort(this,'time-d')">時間↓</button>
+      <button class="sb" onclick="setPreSort(this,'seq')">單號↑</button>
+      <button class="sb" onclick="setPreSort(this,'seq-d')">單號↓</button>
+      <button class="sb" onclick="setPreSort(this,'pickup')">取餐時間</button>
+      <button class="sb" onclick="setPreSort(this,'amt')">金額↓</button>
+      <button class="sb" onclick="setPreSort(this,'note')">備註</button>
+    </div>
+    <div id="hold-list" style="overflow-y:auto;flex:1"></div>
+  </div>
+</div>
+
+<!-- MGMT PAGE -->
+<div id="pg-mgmt" class="pg">
+  <div class="mg-grid">
+    <div class="card">
+      <div class="card-ttl" id="mgmt-ftitle">新增商品</div>
+      <div class="fg"><label>商品名稱</label><input id="f-name" placeholder="例：甜甜圈" autocomplete="off"></div>
+      <div class="fg"><label>單價（元）</label><input id="f-price" type="number" min="0" placeholder="60"></div>
+      <div class="fg"><label>可售數量（0＝無限）</label><input id="f-stock" type="number" min="0" placeholder="0"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-pri" id="mgmt-save" onclick="saveProd()">新增商品</button>
+        <button class="btn-sec" id="mgmt-cancel" onclick="cancelEdit()" style="display:none">取消</button>
+      </div>
+    </div>
+    <div class="card" style="overflow:hidden">
+      <div class="card-ttl">商品列表</div>
+      <div class="pm-scroll" id="pm-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- REPORT PAGE -->
+<div id="pg-rpt" class="pg">
+  <div class="rpt-topbar">
+    <label>選擇日期</label>
+    <select id="rpt-sel" onchange="renderRpt()"></select>
+    <div class="store-btns">
+      <button class="btn-open" id="open-btn" onclick="openStore()">🟢 開店</button>
+      <button class="btn-close" id="close-btn" onclick="closeStore()" style="display:none">🔴 閉店</button>
+    </div>
+  </div>
+  <div class="sg" id="rpt-sg"></div>
+  <div class="rpt-tables">
+    <div class="rpt-tbl-wrap">
+      <div class="tbl-ttl">商品銷售統計</div>
+      <div id="rpt-prod"></div>
+    </div>
+    <div class="rpt-tbl-wrap">
+      <div class="tbl-ttl">訂單列表</div>
+      <div id="rpt-orders"></div>
+    </div>
+  </div>
+
+<!-- SETTINGS PAGE -->
+<div id="pg-settings" class="pg">
+  <div class="mg-grid" style="grid-template-columns:1fr 1fr">
+    <div class="card">
+      <div class="card-ttl">系統設定</div>
+      <div class="fg"><label>店家名稱</label><input id="s-storename" placeholder="咔滋餐車"></div>
+      <div class="fg"><label>備註欄位提示文字</label><input id="s-notehint" placeholder="備註"></div>
+      <div class="fg">
+        <label>預訂頁面公開連結</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input id="s-orderurl" readonly style="flex:1;background:#f8f9fa;font-size:11px" placeholder="填入 GAS_URL 後自動產生">
+          <button class="btn-ed" onclick="copyOrderUrl()" style="white-space:nowrap;padding:7px 10px">複製</button>
+        </div>
+        <div class="hint" style="font-size:11px;color:var(--t3);margin-top:3px">此連結分享給客人即可線上預訂</div>
+      </div>
+      <div class="fg">
+        <label>公告文字（顯示在預訂頁頂端）</label>
+        <textarea id="s-announce" rows="2" style="padding:8px;border:1.5px solid var(--bd);border-radius:5px;resize:vertical" placeholder="例：本週五休息，下週一恢復營業"></textarea>
+      </div>
+      <div class="fg" style="flex-direction:row;align-items:center;gap:10px">
+        <label style="margin-bottom:0">開放線上預訂</label>
+        <input type="checkbox" id="s-enabled" style="width:18px;height:18px;cursor:pointer">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn-pri" onclick="saveSettingsPOS()">儲存設定</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-ttl">預訂頁說明</div>
+      <div style="font-size:13px;color:var(--t2);line-height:1.8">
+        <p>📋 <strong>預訂頁連結</strong>：把 order.html 部署到 GitHub Pages 後，將連結填入左側「預訂頁面公開連結」。</p>
+        <br>
+        <p>📧 <strong>確認信</strong>：客人送出預訂後，系統會自動寄送確認信到客人郵箱。</p>
+        <br>
+        <p>📬 <strong>預訂單</strong>：客人提交的訂單會自動出現在「預訂單」頁面，來源標示為「線上預訂」。</p>
+        <br>
+        <p>🔒 <strong>POS 網址</strong>：index.html 只有你知道，請勿公開分享。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- RECEIPT MODAL -->
+<div id="rcpt-modal" style="display:none" class="ov">
+  <div class="mbox">
+    <h2>Kaz! Car Receipt</h2>
+    <div class="r-no-big" id="r-no"></div>
+    <div class="r-sub" id="r-dt"></div>
+    <div class="r-items" id="r-items"></div>
+    <div class="r-total"><span>Total</span><span id="r-tot"></span></div>
+    <div class="r-paid" id="r-paid"></div>
+    <div class="r-change" id="r-chg"></div>
+    <div class="r-note" id="r-note"></div>
+    <div class="mbtns">
+      <button class="btn-btp" onclick="btPrint()">📡 藍牙列印</button>
+      <button class="btn-print" onclick="browserPrint()">🖨 列印</button>
+      <button class="btn-close2" onclick="closeRcpt()">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- ALERT MODAL -->
+<div id="alert-modal" style="display:none" class="alert-ov">
+  <div class="alert-box">
+    <h2>⏰ 備餐提醒</h2>
+    <div class="alert-time" id="alert-time"></div>
+    <div id="alert-orders"></div>
+    <div style="display:flex;justify-content:center;margin-top:14px">
+      <button onclick="closeAlert()" style="padding:10px 28px;background:var(--acc);color:#fff;border-radius:6px;font-size:14px;font-weight:700">知道了</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+
+const TODAY=new Date().toISOString().slice(0,10);
+document.getElementById('nav-date').textContent='營業日：'+TODAY;
+
+// pickup-inp is now a native time input
+
+
+// ════════════════════════════════════════════════════════════
+//  GAS STORAGE LAYER  (replaces localStorage)
+//  Saves to Google Sheets via GAS Web App API
+// ════════════════════════════════════════════════════════════
+const GAS_URL = '';  // ← 部署後把 GAS Web App URL 貼到這裡
+
+let _gasReady   = false;
+let _saveTimer  = null;
+
+// Instant cache read (localStorage)
+function ld() {
+  try { return JSON.parse(localStorage.getItem('kazpos_cache') || '{}'); }
+  catch(e) { return {}; }
+}
+
+// Write to cache + debounce remote save
+function sv() {
+  try { localStorage.setItem('kazpos_cache', JSON.stringify(S)); } catch(e) {}
+  if (_saveTimer) clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(_remoteSync, 600);
+}
+
+async function _remoteSync() {
+  if (!GAS_URL) return;
+  _setSyncStatus('saving');
+  try {
+    const res = await _gasPost({ action:'saveAll', data: S });
+    if (res.ok) _setSyncStatus('ok');
+    else { _setSyncStatus('error'); console.error('Sync error:', res.error); }
+  } catch(e) { _setSyncStatus('error'); console.error('Sync error:', e); }
+}
+
+async function _gasPost(body) {
+  const response = await fetch(GAS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(body),
+    redirect: 'follow',
+  });
+  const text = await response.text();
+  const m = text.match(/\{.*\}/s);
+  if (!m) throw new Error('Bad response: ' + text.slice(0,200));
+  return JSON.parse(m[0]);
+}
+
+async function _loadRemote() {
+  if (!GAS_URL) {
+    _setSyncStatus('nourl');
+    _gasReady = true;
+    _initAfterLoad();
+    return;
+  }
+  _setSyncStatus('loading');
+  try {
+    const res = await _gasPost({ action: 'loadAll' });
+    if (res.ok && res.data) {
+      const d = res.data;
+      if (d.products && d.products.length) {
+        S = d;
+        if (!S.seq)      S.seq = {};
+        if (!S.holds)    S.holds = [];
+        if (!S.orders)   S.orders = [];
+        if (!S.sessions) S.sessions = [];
+        // Merge settings
+        if (d.settings) S.settings = d.settings;
+        try { localStorage.setItem('kazpos_cache', JSON.stringify(S)); } catch(e) {}
+      }
+    }
+    _setSyncStatus('ok');
+  } catch(e) {
+    console.error('Load error:', e);
+    _setSyncStatus('error');
+    toast('雲端載入失敗，使用本機快取', 4000);
+  }
+  _gasReady = true;
+  _initAfterLoad();
+}
+
+function _setSyncStatus(state) {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  const map = {
+    loading: ['⟳ 載入中', '#f39c12'],
+    saving:  ['⟳ 同步中', '#f39c12'],
+    ok:      ['✓ 已同步', '#27ae60'],
+    error:   ['⚠ 同步失敗', '#e74c3c'],
+    nourl:   ['⚠ 未設定GAS', '#e74c3c'],
+  };
+  const [text, color] = map[state] || ['', '#999'];
+  el.textContent = text;
+  el.style.color = color;
+}
+
+function _initAfterLoad() {
+  buildNP(); renderProds(); renderCart(); updBt(); updateStoreBtn();
+  if (S.settings) applySettings(S.settings);
+}
+
+// Apply settings from Sheets
+function applySettings(settings) {
+  if (settings.storeName) {
+    document.querySelector('.logo').textContent = settings.storeName;
+    document.title = settings.storeName + ' POS';
+  }
+  if (settings.noteHint) {
+    const el = document.getElementById('note-inp');
+    if (el) el.placeholder = settings.noteHint;
+  }
+}
+
+
+let S=ld();
+if(!S.products){
+  S.products=[
+    {id:'p1',name:'甜甜圈',price:50,stock:50,sold:{}},
+    {id:'p2',name:'甜甜圈分享組',price:180,stock:20,sold:{}},
+    {id:'p3',name:'鮮脆薯-原味',price:60,stock:40,sold:{}},
+    {id:'p4',name:'鮮脆薯-蒜蒜',price:65,stock:40,sold:{}},
+    {id:'p5',name:'鮮脆薯-海苔',price:65,stock:40,sold:{}},
+    {id:'p6',name:'鮮脆薯-蜂蜜芥末',price:70,stock:40,sold:{}},
+    {id:'p7',name:'鮮脆薯-塔塔',price:70,stock:40,sold:{}},
+    {id:'p8',name:'鮮脆薯-雙起司',price:75,stock:30,sold:{}},
+    {id:'p9',name:'鮮脆薯-番茄',price:65,stock:40,sold:{}},
+  ];
+  S.orders=[];S.holds=[];S.seq={};S.sessions=[];S.curSession=null;sv();
+}
+if(!S.seq)S.seq={};
+if(!S.holds)S.holds=[];
+if(!S.orders)S.orders=[];
+if(!S.sessions)S.sessions=[];
+
+let cart={},payAmt=0,editPid=null,editOrderId=null,lastOrder=null;
+let waitSortKey='seq',preSortKey='time',alertShown=new Set();
+
+function sessionPrefix(){return S.curSession?S.curSession.prefix:'A';}
+function orderNo(seq){return sessionPrefix()+String(seq).padStart(3,'0');}
+function nextSeq(){
+  const key=TODAY+'_'+sessionPrefix();
+  if(!S.seq[key])S.seq[key]=0;
+  S.seq[key]++;sv();return S.seq[key];
+}
+function curSessId(){return S.curSession?S.curSession.id:null;}
+const sorted=()=>[...S.products].sort((a,b)=>a.name.localeCompare(b.name,'zh-Hant'));
+const soldT=p=>(p.sold&&p.sold[TODAY])?p.sold[TODAY]:0;
+const avail=p=>!p.stock||(p.stock-soldT(p))>0;
+const todayO=()=>S.orders.filter(o=>o.date===TODAY&&o.sessionId===curSessId());
+const todayH=()=>S.holds.filter(h=>h.date===TODAY&&h.sessionId===curSessId());
+const fmt=n=>'$'+n.toLocaleString();
+const cartTot=()=>Object.keys(cart).reduce((s,pid)=>{const p=S.products.find(x=>x.id===pid);return s+(p?p.price*cart[pid]:0);},0);
+function toast(msg,dur){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur||2400);}
+
+// OPEN / CLOSE STORE
+function openStore(){
+  const existing=S.sessions.filter(s=>s.date===TODAY);
+  const prefix='ABCDEFGHIJKLMNOPQRSTUVWXYZ'[existing.length]||'Z';
+  const sess={id:'s'+Date.now(),date:TODAY,prefix,openTime:new Date().toLocaleTimeString('zh-TW'),closeTime:null};
+  S.sessions.push(sess);S.curSession=sess;sv();
+  renderProds();renderWait();renderHoldList();renderOM();updateStoreBtn();
+  toast('開店！流水號前綴：'+prefix,3000);
+}
+function closeStore(){
+  if(!S.curSession){toast('尚未開店');return;}
+  S.curSession.closeTime=new Date().toLocaleTimeString('zh-TW');
+  const idx=S.sessions.findIndex(s=>s.id===S.curSession.id);
+  if(idx>=0)S.sessions[idx]=S.curSession;
+  sv();updateStoreBtn();
+  toast('閉店！本次 '+todayO().filter(o=>o.status!=='cancelled').length+' 筆訂單',4000);
+}
+function updateStoreBtn(){
+  const isOpen=S.curSession&&!S.curSession.closeTime;
+  document.getElementById('open-btn').style.display=isOpen?'none':'';
+  document.getElementById('close-btn').style.display=isOpen?'':'none';
+}
+
+// PRODUCTS
+function renderProds(){
+  const el=document.getElementById('prod-list');el.innerHTML='';
+  sorted().forEach(p=>{
+    const ok=avail(p);const rem=p.stock?(p.stock-soldT(p))+'份':'∞';
+    const d=document.createElement('div');d.className='pi'+(ok?'':' so');
+    d.innerHTML='<div class="pi-left"><div class="pi-name">'+p.name+'</div><div class="pi-stock">剩餘 '+rem+'</div></div><div class="pi-price">'+fmt(p.price)+'</div>';
+    if(ok)d.onclick=()=>addCart(p.id);
+    el.appendChild(d);
+  });
+}
+
+// CART
+function addCart(pid){const p=S.products.find(x=>x.id===pid);if(!p||!avail(p))return;cart[pid]=(cart[pid]||0)+1;renderCart();}
+function chgQty(pid,delta){cart[pid]=(cart[pid]||0)+delta;if(cart[pid]<=0)delete cart[pid];renderCart();}
+function renderCart(){
+  const el=document.getElementById('cart-list');el.innerHTML='';
+  const keys=Object.keys(cart).filter(k=>cart[k]>0);
+  if(!keys.length){el.innerHTML='<div class="cart-empty">尚未選擇商品</div>';if(!editOrderId)document.getElementById('order-seq-display').textContent='尚未結帳';}
+  keys.forEach(pid=>{
+    const p=S.products.find(x=>x.id===pid);if(!p)return;
+    const sub=p.price*cart[pid];
+    const d=document.createElement('div');d.className='ci';
+    const cn=document.createElement('div');cn.className='ci-name';cn.textContent=p.name;
+    const qc=document.createElement('div');qc.className='qc';
+    const bm=document.createElement('button');bm.className='qb qb-m';bm.textContent='−';bm.onclick=()=>chgQty(pid,-1);
+    const qn=document.createElement('span');qn.className='qn';qn.textContent=cart[pid];
+    const bp=document.createElement('button');bp.className='qb qb-p';bp.textContent='+';bp.onclick=()=>chgQty(pid,1);
+    qc.appendChild(bm);qc.appendChild(qn);qc.appendChild(bp);
+    const cs=document.createElement('div');cs.className='ci-sub';cs.textContent=fmt(sub);
+    d.appendChild(cn);d.appendChild(qc);d.appendChild(cs);el.appendChild(d);
+  });
+  document.getElementById('cart-total').textContent=fmt(cartTot());
+  updateChg();
+}
+
+// NUMPAD
+function buildNP(){
+  const np=document.getElementById('npg');np.innerHTML='';
+  [1,2,3,4,5,6,7,8,9,'00',0,'退格','清除'].forEach((n,i)=>{
+    const b=document.createElement('button');
+    b.className='npb'+(n==='清除'?' npb-clr':n==='退格'?' npb-bk':'');
+    b.textContent=n;b.onclick=()=>numP(n);np.appendChild(b);
+  });
+}
+function numP(n){
+  if(n==='退格')payAmt=Math.floor(payAmt/10);
+  else if(n==='清除')payAmt=0;
+  else payAmt=Math.min(parseInt(String(payAmt)+String(n))||0,999999);
+  document.getElementById('pay-disp').textContent=fmt(payAmt);updateChg();
+}
+function updateChg(){
+  const tot=cartTot(),cd=document.getElementById('chg-disp');
+  if(payAmt>0&&tot>0){const ch=payAmt-tot;cd.textContent=fmt(ch);cd.className='pv'+(ch>=0?' pos':' neg');}
+  else{cd.textContent='$0';cd.className='pv';}
+}
+
+// CHECKOUT
+function doCheckout(){
+  if(!S.curSession||S.curSession.closeTime){toast('請先開店才能結帳');return;}
+  const keys=Object.keys(cart).filter(k=>cart[k]>0);
+  if(!keys.length){toast('請先加入商品');return;}
+  const tot=cartTot();
+  if(payAmt>0&&payAmt<tot){toast('付款金額不足');return;}
+  const note=document.getElementById('note-inp').value.trim();
+  const pickup=document.getElementById('pickup-inp').value;
+  const items=keys.map(pid=>{const p=S.products.find(x=>x.id===pid);return{pid,name:p.name,price:p.price,qty:cart[pid],sub:p.price*cart[pid]};});
+  const chg=payAmt>0?payAmt-tot:0;
+  // Restore editOrderId from backup if lost
+  if(!editOrderId&&window._editOrderIdBackup)editOrderId=window._editOrderIdBackup;
+  window._editOrderIdBackup=null;
+  if(editOrderId){
+    const old=S.orders.find(o=>o.id===editOrderId);
+    if(old){
+      old.items.forEach(i=>{const p=S.products.find(x=>x.id===i.pid);if(p&&p.sold&&p.sold[TODAY])p.sold[TODAY]=Math.max(0,p.sold[TODAY]-i.qty);});
+      old.items=items;old.total=tot;old.paid=payAmt;old.change=chg;old.note=note;old.pickup=pickup;old.status='pending';
+      items.forEach(i=>{const p=S.products.find(x=>x.id===i.pid);if(!p.sold)p.sold={};if(!p.sold[TODAY])p.sold[TODAY]=0;p.sold[TODAY]+=i.qty;});
+      sv();lastOrder=Object.assign({},old);
+    }
+    editOrderId=null;document.getElementById('edit-badge').style.display='none';document.getElementById('co-btn').textContent='結帳 ';document.getElementById('co-btn').appendChild(document.getElementById('edit-badge'));document.getElementById('order-seq-display').textContent='尚未結帳';
+  }else{
+    // If coming from checkoutHold, reuse original no/seq
+    let seq,no;
+    if(window._holdNo){
+      no=window._holdNo;seq=window._holdSeq;
+      window._holdNo=null;window._holdSeq=null;window._holdSessionId=null;
+  window._editOrderIdBackup=null;
+    }else{
+      seq=nextSeq();no=orderNo(seq);
+    }
+    const order={id:'o'+Date.now(),no,seq,date:TODAY,sessionId:curSessId(),items,total:tot,paid:payAmt,change:chg,note,pickup,status:'pending',ts:Date.now()};
+    S.orders.push(order);
+    items.forEach(i=>{const p=S.products.find(x=>x.id===i.pid);if(!p.sold)p.sold={};if(!p.sold[TODAY])p.sold[TODAY]=0;p.sold[TODAY]+=i.qty;});
+    sv();lastOrder=order;
+  }
+  clearCO();showRcpt(lastOrder);
+  if(btConnected)setTimeout(()=>btPrint(),400);
+}
+function doHold(){
+  if(!S.curSession||S.curSession.closeTime){toast('請先開店才能暫存');return;}
+  if(editOrderId){toast('編輯模式中請按結帳，不能暫存');return;}
+  const keys=Object.keys(cart).filter(k=>cart[k]>0);
+  if(!keys.length){toast('請先加入商品');return;}
+  const seq=nextSeq(),no=orderNo(seq);
+  const note=document.getElementById('note-inp').value.trim();
+  const pickup=document.getElementById('pickup-inp').value;
+  const items=keys.map(pid=>{const p=S.products.find(x=>x.id===pid);return{pid,name:p.name,price:p.price,qty:cart[pid],sub:p.price*cart[pid]};});
+  S.holds.push({id:'h'+Date.now(),no,seq,date:TODAY,sessionId:curSessId(),items,total:cartTot(),note,pickup,ts:Date.now(),alertFired:false});
+  sv();clearCO();toast('預訂單 '+no+' 已暫存');
+}
+function clearCO(){
+  cart={};payAmt=0;
+  window._holdNo=null;window._holdSeq=null;window._holdSessionId=null;
+  window._editOrderIdBackup=null;
+  document.getElementById('pay-disp').textContent='$0';
+  document.getElementById('chg-disp').textContent='$0';
+  document.getElementById('chg-disp').className='pv';
+  document.getElementById('note-inp').value='';
+  document.getElementById('pickup-inp').value='';
+  document.getElementById('order-seq-display').textContent='尚未結帳';
+  renderCart();renderProds();renderWait();renderHoldList();
+}
+
+// RECEIPT
+function showRcpt(o){
+  document.getElementById('r-no').textContent=o.no;
+  document.getElementById('r-dt').textContent=o.date+' '+new Date(o.ts).toLocaleTimeString('zh-TW');
+  let html='';o.items.forEach(i=>{html+='<div class="ri"><span class="rn">'+i.name+'</span><span class="rq">x'+i.qty+'</span><span class="rs">'+fmt(i.sub)+'</span></div>';});
+  document.getElementById('r-items').innerHTML=html;
+  document.getElementById('r-tot').textContent=fmt(o.total);
+  document.getElementById('r-paid').textContent=o.paid?'Paid '+fmt(o.paid):'';
+  document.getElementById('r-chg').textContent=o.paid?'Change '+fmt(o.change):'';
+  document.getElementById('r-note').textContent=o.note?'Note: '+o.note:'';
+  document.getElementById('rcpt-modal').style.display='flex';
+}
+function closeRcpt(){document.getElementById('rcpt-modal').style.display='none';renderWait();renderHoldList();renderOM();}
+function browserPrint(){
+  const o=lastOrder;if(!o)return;
+  const lines=['Kaz! Car Receipt','================',o.no,o.date+' '+new Date(o.ts).toLocaleTimeString('zh-TW'),'----------------'];
+  o.items.forEach(i=>lines.push(i.name+' x'+i.qty+'   $'+i.sub));
+  lines.push('----------------','Total: $'+o.total);
+  if(o.paid){lines.push('Paid:  $'+o.paid);lines.push('Change:$'+o.change);}
+  if(o.note)lines.push('Note:  '+o.note);
+  lines.push('================','Thank you!');
+  const w=window.open('','_blank','width=320,height=500');
+  if(w){w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:monospace;font-size:12px;padding:4px;white-space:pre;line-height:1.5}@media print{@page{margin:1mm 2mm;size:80mm auto}}</style></head><body>'+lines.join('\n')+'</body></html>');w.document.close();setTimeout(()=>{w.focus();w.print();},300);}
+}
+
+// SORT
+function setWaitSort(btn,key){waitSortKey=key;document.querySelectorAll('#wait-sort .sb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderWait();}
+function setPreSort(btn,key){preSortKey=key;document.querySelectorAll('#pre-sort .sb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderHoldList();}
+function applySort(arr,key){
+  const a=[...arr];
+  if(key==='seq')return a.sort((x,y)=>x.seq-y.seq);
+  if(key==='seq-d')return a.sort((x,y)=>y.seq-x.seq);
+  if(key==='time')return a.sort((x,y)=>x.ts-y.ts);
+  if(key==='time-d')return a.sort((x,y)=>y.ts-x.ts);
+  if(key==='amt')return a.sort((x,y)=>y.total-x.total);
+  if(key==='pickup')return a.sort((x,y)=>{if(!x.pickup&&!y.pickup)return 0;if(!x.pickup)return 1;if(!y.pickup)return -1;return x.pickup.localeCompare(y.pickup);});
+  if(key==='note')return a.sort((x,y)=>(x.note||'').localeCompare(y.note||'','zh-Hant'));
+  return a;
+}
+
+// WAIT LIST
+function renderWait(){
+  const el=document.getElementById('wait-list');
+  const pending=applySort(todayO().filter(o=>o.status==='pending'),waitSortKey);
+  if(!pending.length){el.innerHTML='<div class="empty">暫無等候訂單</div>';return;}
+  el.innerHTML='';
+  const now=Date.now();
+  pending.forEach(o=>{
+    const overdue=(now-o.ts)>600000;
+    const d=document.createElement('div');d.className='wc'+(overdue?' overdue':'');
+    const sum=o.items.map(i=>i.name+' x'+i.qty).join('・');
+    const no=document.createElement('div');no.className='wc-no';no.textContent=o.no;
+    const body=document.createElement('div');body.className='wc-body';
+    body.innerHTML='<div class="wc-sum">'+sum+'</div>'
+      +(o.note?'<div class="wc-meta">備：'+o.note+'</div>':'')
+      +(o.pickup?'<div class="wc-meta">取餐：'+o.pickup+'</div>':'')
+      +'<div class="wc-amt">'+fmt(o.total)+'</div>';
+    const btns=document.createElement('div');btns.className='wc-btns';
+    const sb=document.createElement('button');sb.className='btn-serve';sb.textContent='出餐';sb.onclick=()=>serveOrder(o.id);
+    const eb=document.createElement('button');eb.className='btn-edit2';eb.textContent='編輯';eb.onclick=()=>editOrder(o.id);
+    btns.appendChild(sb);btns.appendChild(eb);
+    d.appendChild(no);d.appendChild(body);d.appendChild(btns);el.appendChild(d);
+  });
+}
+function serveOrder(id){const o=S.orders.find(x=>x.id===id);if(o){o.status='done';sv();}renderWait();renderOM();toast('訂單 '+(o?o.no:'')+' 已出餐 ✓');}
+function editOrder(id){
+  const o=S.orders.find(x=>x.id===id);if(!o)return;
+  cart={};o.items.forEach(i=>{cart[i.pid]=i.qty;});
+  document.getElementById('note-inp').value=o.note||'';
+  document.getElementById('pickup-inp').value=o.pickup||'';
+  editOrderId=id;
+  window._editOrderIdBackup=id;
+  document.getElementById('edit-badge').style.display='inline-block';
+  document.getElementById('order-seq-display').textContent=o.no+' (編輯中)';
+  showPg('order');renderCart();toast('編輯 '+o.no+'，改完按結帳');
+}
+
+// DONE LIST
+function renderOM(){
+  const orders=todayO().slice().reverse();
+  const el=document.getElementById('done-list');
+  if(!orders.length){el.innerHTML='<div class="empty">尚無訂單</div>';return;}
+  el.innerHTML='';
+  orders.forEach(o=>{
+    const d=document.createElement('div');d.className='dc';
+    const sum=o.items.map(i=>i.name+' x'+i.qty).join('・');
+    const badge=o.status==='done'?'<span class="bdg bdg-done">完成</span>':'<span class="bdg bdg-pend">等候</span>';
+    const no=document.createElement('div');no.className='dc-no';no.textContent=o.no;
+    const body=document.createElement('div');body.className='dc-body';
+    body.innerHTML='<div class="dc-sum">'+sum+'</div>'
+      +(o.note?'<div class="dc-meta">備：'+o.note+'</div>':'')
+      +(o.pickup?'<div class="dc-meta">取餐：'+o.pickup+'</div>':'');
+    const bamt=document.createElement('div');bamt.className='dc-amt';bamt.textContent=fmt(o.total);
+    const badgeEl=document.createElement('span');
+    badgeEl.className=o.status==='done'?'bdg bdg-done':'bdg bdg-pend';
+    badgeEl.textContent=o.status==='done'?'完成':'等候';
+    // Action buttons for done orders
+    const btns=document.createElement('div');btns.className='dc-btns';
+    if(o.status==='done'){
+      const rb=document.createElement('button');rb.className='btn-reprint';rb.textContent='🖨 補印';
+      rb.onclick=()=>reprintOrder(o.id);
+      const ub=document.createElement('button');ub.className='btn-unserve';ub.textContent='↩ 取消出餐';
+      ub.onclick=()=>unserveOrder(o.id);
+      btns.appendChild(rb);btns.appendChild(ub);
+    }
+    d.appendChild(no);d.appendChild(body);d.appendChild(bamt);d.appendChild(badgeEl);d.appendChild(btns);
+    el.appendChild(d);
+  });
+}
+
+function unserveOrder(id){
+  const o=S.orders.find(x=>x.id===id);
+  if(!o){return;}
+  o.status='pending';sv();
+  renderWait();renderOM();
+  toast('訂單 '+o.no+' 已回復至等候出餐');
+}
+
+function reprintOrder(id){
+  const o=S.orders.find(x=>x.id===id);
+  if(!o){return;}
+  lastOrder=o;
+  showRcpt(o);
+}
+
+// HOLDS
+function renderHoldList(){
+  const el=document.getElementById('hold-list');
+  const holds=applySort(todayH(),preSortKey);
+  if(!holds.length){el.innerHTML='<div class="empty">無預訂單</div>';return;}
+  el.innerHTML='';
+  holds.forEach(h=>{
+    const d=document.createElement('div');d.className='hc'+(h.alertFired?' hc-alert':'');
+    const sum=h.items.map(i=>i.name+' x'+i.qty).join('・');
+    const no=document.createElement('div');no.className='hc-no';
+    no.innerHTML=h.no+(h.source==='public'?'<span style="font-size:10px;background:#e8f4fd;color:#2980b9;border-radius:8px;padding:1px 6px;margin-left:4px;font-weight:700;vertical-align:middle">線上</span>':'');
+    const body=document.createElement('div');body.className='hc-body';
+    const custInfo = h.customerName ? '<div class="hc-meta" style="color:#8e44ad;font-weight:700">👤 '+h.customerName+'</div>' : '';
+    body.innerHTML='<div class="hc-sum">'+sum+'</div>'+custInfo
+      +(h.note?'<div class="hc-meta">備：'+h.note+'</div>':'')
+      +(h.pickup?'<div class="hc-meta hc-pickup">取餐：'+h.pickup+'</div>':'')
+      +'<div class="hc-amt">'+fmt(h.total)+'</div>';
+    const pb=document.createElement('button');pb.className='btn-prep';pb.textContent='備餐結帳';pb.onclick=()=>checkoutHold(h.id);
+    d.appendChild(no);d.appendChild(body);d.appendChild(pb);el.appendChild(d);
+  });
+}
+function checkoutHold(id){
+  const h=S.holds.find(x=>x.id===id);if(!h)return;
+  cart={};h.items.forEach(i=>{cart[i.pid]=i.qty;});
+  document.getElementById('note-inp').value=h.note||'';
+  document.getElementById('pickup-inp').value=h.pickup||'';
+  // Preserve original hold no/seq so doCheckout reuses them
+  window._holdNo=h.no;
+  window._holdSeq=h.seq;
+  window._holdSessionId=h.sessionId;
+  S.holds=S.holds.filter(x=>x.id!==id);sv();
+  // Update seq display to show preserved no
+  document.getElementById('order-seq-display').textContent=h.no+' (預訂單)';
+  showPg('order');renderCart();toast('已載入預訂單 '+h.no+'，確認後按結帳');
+}
+
+// PICKUP ALERTS
+function checkPickupAlerts(){
+  const now=new Date(),groups={};
+  todayH().forEach(h=>{
+    if(!h.pickup)return;
+    const parts=h.pickup.split(':');
+    const pt=new Date();pt.setHours(+parts[0],+parts[1],0,0);
+    const diff=(pt-now)/60000;
+    if(diff>0&&diff<=10){
+      if(!groups[h.pickup])groups[h.pickup]=[];groups[h.pickup].push(h);
+      if(!h.alertFired){h.alertFired=true;sv();}
+    }
+  });
+  Object.entries(groups).forEach(([time,hs])=>{
+    const key=time+'|'+hs.map(h=>h.id).sort().join(',');
+    if(alertShown.has(key))return;
+    alertShown.add(key);
+    const modal=document.getElementById('alert-modal');
+    if(modal.style.display==='flex'){
+      const cur=document.getElementById('alert-time').textContent;
+      if(!cur.includes(time)){
+        document.getElementById('alert-time').textContent=cur+' / '+time;
+        const div=document.createElement('div');div.style.cssText='border-top:1px solid #ddd;margin:8px 0;';
+        document.getElementById('alert-orders').appendChild(div);
+        hs.forEach(h=>document.getElementById('alert-orders').appendChild(buildAO(h)));
+      }
+    }else{showPickupAlert(time,hs);}
+  });
+  renderHoldList();renderWait();
+}
+function buildAO(h){
+  const div=document.createElement('div');div.className='ao';
+  const sum=h.items.map(i=>i.name+' x'+i.qty).join('・');
+  div.innerHTML='<div class="ao-no">'+h.no+'</div><div class="ao-sum">'+sum+'</div>'+(h.note?'<div class="ao-note">備：'+h.note+'</div>':'');
+  return div;
+}
+function showPickupAlert(time,hs){
+  document.getElementById('alert-time').textContent='取餐時間：'+time;
+  const c=document.getElementById('alert-orders');c.innerHTML='';hs.forEach(h=>c.appendChild(buildAO(h)));
+  document.getElementById('alert-modal').style.display='flex';
+}
+function closeAlert(){document.getElementById('alert-modal').style.display='none';}
+setInterval(()=>{checkPickupAlerts();},30000);
+
+// PRODUCT MGMT
+function renderPM(){
+  const el=document.getElementById('pm-list');el.innerHTML='';
+  sorted().forEach(p=>{
+    const rem=p.stock?(p.stock-soldT(p))+'份':'無限';
+    const d=document.createElement('div');d.className='pm-row';
+    const nm=document.createElement('div');nm.className='pm-name';nm.textContent=p.name;
+    const pr=document.createElement('div');pr.className='pm-price';pr.textContent=fmt(p.price);
+    const st=document.createElement('div');st.className='pm-stock';st.textContent='庫存 '+rem;
+    const be=document.createElement('button');be.className='btn-ed';be.textContent='編輯';be.onclick=()=>editP(p.id);
+    const bd=document.createElement('button');bd.className='btn-dl';bd.textContent='刪除';bd.onclick=()=>delP(p.id);
+    const btns=document.createElement('div');btns.style.cssText='display:flex;gap:5px;flex-shrink:0';btns.appendChild(be);btns.appendChild(bd);
+    d.appendChild(nm);d.appendChild(pr);d.appendChild(st);d.appendChild(btns);el.appendChild(d);
+  });
+}
+function saveProd(){
+  const n=document.getElementById('f-name').value.trim();
+  const pr=parseInt(document.getElementById('f-price').value)||0;
+  const st=parseInt(document.getElementById('f-stock').value)||0;
+  if(!n){toast('請輸入名稱');return;}if(!pr){toast('請輸入單價');return;}
+  if(editPid){const p=S.products.find(x=>x.id===editPid);if(p){p.name=n;p.price=pr;p.stock=st;}cancelEdit();toast('商品已更新');}
+  else{S.products.push({id:'p'+Date.now(),name:n,price:pr,stock:st,sold:{}});toast('商品已新增');}
+  sv();['f-name','f-price','f-stock'].forEach(i=>document.getElementById(i).value='');renderPM();renderProds();
+}
+function editP(id){
+  const p=S.products.find(x=>x.id===id);if(!p)return;editPid=id;
+  document.getElementById('f-name').value=p.name;document.getElementById('f-price').value=p.price;document.getElementById('f-stock').value=p.stock||0;
+  document.getElementById('mgmt-ftitle').textContent='編輯商品';document.getElementById('mgmt-save').textContent='儲存';document.getElementById('mgmt-cancel').style.display='';
+}
+function cancelEdit(){
+  editPid=null;['f-name','f-price','f-stock'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('mgmt-ftitle').textContent='新增商品';document.getElementById('mgmt-save').textContent='新增商品';document.getElementById('mgmt-cancel').style.display='none';
+}
+function delP(id){S.products=S.products.filter(x=>x.id!==id);sv();renderPM();renderProds();toast('已刪除');}
+
+// REPORT
+function buildDateSel(){
+  const sel=document.getElementById('rpt-sel');
+  const dates=[...new Set(S.orders.map(o=>o.date))].sort().reverse();
+  if(!dates.includes(TODAY))dates.unshift(TODAY);
+  sel.innerHTML='';
+  dates.forEach(d=>{const opt=document.createElement('option');opt.value=d;opt.textContent=d+(d===TODAY?' (今日)':'');sel.appendChild(opt);});
+}
+function renderRpt(){
+  const date=document.getElementById('rpt-sel').value||TODAY;
+  const orders=S.orders.filter(o=>o.date===date&&o.status!=='cancelled');
+  const tot=orders.reduce((s,o)=>s+o.total,0),cnt=orders.length;
+  document.getElementById('rpt-sg').innerHTML=
+    '<div class="sc"><div class="sv">'+fmt(tot)+'</div><div class="sl">銷售總額</div></div>'
+    +'<div class="sc"><div class="sv">'+cnt+'</div><div class="sl">訂單數</div></div>'
+    +'<div class="sc"><div class="sv">'+fmt(cnt?Math.round(tot/cnt):0)+'</div><div class="sl">平均客單</div></div>';
+  const map={};
+  orders.forEach(o=>o.items.forEach(i=>{if(!map[i.name])map[i.name]={q:0,a:0};map[i.name].q+=i.qty;map[i.name].a+=i.sub;}));
+  const rows=Object.entries(map).sort((a,b)=>b[1].a-a[1].a);
+  let phtml='<table><thead><tr><th>商品</th><th>數量</th><th>金額</th><th>佔比</th></tr></thead><tbody>';
+  if(!rows.length)phtml+='<tr><td colspan="4" style="text-align:center;color:#999;padding:14px">無資料</td></tr>';
+  rows.forEach(([n,v])=>{const pct=tot?Math.round(v.a/tot*100):0;phtml+='<tr><td>'+n+'</td><td>'+v.q+'份</td><td>'+fmt(v.a)+'</td><td>'+pct+'%</td></tr>';});
+  phtml+='</tbody></table>';document.getElementById('rpt-prod').innerHTML=phtml;
+  let ohtml='<table><thead><tr><th>單號</th><th>時間</th><th>內容</th><th>備註</th><th>金額</th></tr></thead><tbody>';
+  if(!orders.length)ohtml+='<tr><td colspan="5" style="text-align:center;color:#999;padding:14px">無資料</td></tr>';
+  orders.slice().reverse().forEach(o=>{
+    const d=new Date(o.ts);const ts=d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+    const sum=o.items.map(i=>i.name+'x'+i.qty).join('・');
+    ohtml+='<tr><td>'+o.no+'</td><td>'+ts+'</td><td>'+sum+'</td><td>'+(o.note||'')+'</td><td>'+fmt(o.total)+'</td></tr>';
+  });
+  ohtml+='</tbody></table>';document.getElementById('rpt-orders').innerHTML=ohtml;
+}
+
+// NAVIGATION
+function showPg(pg){
+  document.querySelectorAll('.pg').forEach(el=>{el.classList.remove('active');el.style.display='none';});
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  const map={order:'pg-order',om:'pg-om',pre:'pg-pre',mgmt:'pg-mgmt',rpt:'pg-rpt',settings:'pg-settings'};
+  const idx={order:0,om:1,pre:2,mgmt:3,rpt:4,settings:5};
+  const el=document.getElementById(map[pg]);el.style.display='flex';el.classList.add('active');
+  document.querySelectorAll('.nb')[idx[pg]].classList.add('active');
+  if(pg==='om'){renderWait();renderOM();}
+  if(pg==='pre'){renderHoldList();}
+  if(pg==='mgmt'){renderPM();}
+  if(pg==='rpt'){buildDateSel();renderRpt();}
+  if(pg==='settings'){renderSettingsPg();}
+}
+
+// BLUETOOTH
+const ESC=0x1B,GS=0x1D,LF=0x0A;
+let btDevice=null,btChar=null,btConnected=false;
+const BT_SVCS=['000018f0-0000-1000-8000-00805f9b34fb','0000ff00-0000-1000-8000-00805f9b34fb','0000ffe0-0000-1000-8000-00805f9b34fb','49535343-fe7d-4ae5-8fa9-9fafd205e455','e7810a71-73ae-499d-8c15-faa9aef0c3f2'];
+const BT_CHARS=['00002af1-0000-1000-8000-00805f9b34fb','0000ff02-0000-1000-8000-00805f9b34fb','0000ffe1-0000-1000-8000-00805f9b34fb','49535343-8841-43f4-a8d4-ecbe34729bb3','bef8d6c9-9c21-4c9e-b632-bd58c1009f9f'];
+function updBt(){const el=document.getElementById('bt-status');if(btConnected){el.textContent='印表機：'+((btDevice&&btDevice.name)||'已連線');el.className='bt-status on';}else{el.textContent='印表機：未連線';el.className='bt-status';}}
+async function btConnect(){
+  if(!navigator.bluetooth){toast('請使用 Chrome 瀏覽器');return;}
+  if(btConnected){try{if(btDevice)btDevice.gatt.disconnect();}catch(e){}btDevice=null;btChar=null;btConnected=false;updBt();toast('已斷線');return;}
+  try{
+    toast('搜尋藍牙印表機...');
+    btDevice=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:BT_SVCS});
+    btDevice.addEventListener('gattserverdisconnected',()=>{btConnected=false;btChar=null;updBt();toast('印表機已斷線');});
+    const srv=await btDevice.gatt.connect();let found=false;
+    for(const su of BT_SVCS){try{const s=await srv.getPrimaryService(su);for(const cu of BT_CHARS){try{btChar=await s.getCharacteristic(cu);found=true;break;}catch(e){}}if(found)break;}catch(e){}}
+    if(!found){try{const svcs=await srv.getPrimaryServices();for(const s of svcs){const cs=await s.getCharacteristics();for(const c of cs){if(c.properties.write||c.properties.writeWithoutResponse){btChar=c;found=true;break;}}if(found)break;}}catch(e){}}
+    if(!found){toast('找不到列印通道');if(btDevice)btDevice.gatt.disconnect();btDevice=null;btChar=null;return;}
+    btConnected=true;updBt();toast('✓ 連接：'+((btDevice&&btDevice.name)||'印表機'));
+  }catch(e){if(e.name!=='NotFoundError')toast('連接失敗：'+e.message);btDevice=null;btChar=null;btConnected=false;updBt();}
+}
+const GBK={20020:[193,217],20139:[207,237],20184:[184,182],20215:[188,219],20462:[208,222],20505:[186,242],20633:[130,228],20729:[131,114],20809:[185,226],20986:[179,246],20998:[183,214],21024:[201,190],21034:[132,104],21333:[181,165],21382:[192,250],21407:[212,173],21452:[203,171],21462:[200,161],21487:[191,201],21490:[202,183],21495:[186,197],21496:[203,190],21517:[195,251],21619:[206,182],21652:[223,199],21697:[198,183],21806:[202,219],21830:[201,204],21934:[134,206],22280:[200,166],22577:[136,243],22612:[203,254],22686:[212,246],22791:[177,184],23384:[180,230],23436:[205,234],24115:[142,164],24207:[208,242],24211:[191,226],24235:[142,236],24635:[215,220],25104:[179,201],25214:[213,210],25253:[177,168],25490:[197,197],25913:[184,196],25968:[202,253],25976:[148,181],26032:[208,194],26080:[206,222],26085:[200,213],26102:[202,177],26178:[149,114],26242:[212,221],26283:[149,186],26399:[198,218],26411:[196,169],27454:[191,238],27511:[154,118],27700:[203,174],27969:[193,247],28023:[186,163],28363:[215,204],28961:[159,111],29702:[192,237],29980:[204,240],30058:[183,172],31216:[179,198],31281:[183,81],31561:[181,200],31649:[185,220],32068:[189,77],32080:[189,89],32232:[190,142],32317:[191,130],32452:[215,233],32467:[189,225],32534:[177,224],33030:[180,224],33256:[197,82],33445:[189,230],33492:[204,166],33540:[199,209],33948:[203,226],34223:[202,237],34399:[204,150],34562:[183,228],34588:[195,219],34920:[177,237],35330:[211,134],35336:[211,139],35387:[212,93],35613:[214,120],35746:[182,169],35874:[208,187],36134:[213,203],36215:[198,240],36554:[220,135],36655:[221,139],36710:[179,181],36753:[188,173],37327:[193,191],37559:[228,78],37666:[229,88],38065:[199,174],38144:[207,250],38291:[233,103],38388:[188,228],38480:[207,222],38500:[179,253],38617:[235,112],38928:[238,65],38989:[238,126],39044:[212,164],39069:[182,238],39184:[178,205],39854:[245,114],40092:[207,202],40670:[252,99]};
+const SIMP={'組':'组','鮮':'鲜','雙':'双','單':'单','號':'号','總':'总','找':'找','錢':'钱','備':'备','時':'时','間':'间','謝':'谢','臨':'临','車':'车','訂':'订','報':'报','帳':'账','暫':'暂','預':'预','編':'编','輯':'辑','刪':'删','稱':'称','價':'价','數':'数','庫':'库','無':'无','銷':'销','額':'额','歷':'历','結':'结'};
+function toGBK(str){const out=[];for(let i=0;i<str.length;i++){const cp=str.codePointAt(i);if(cp>0xFFFF){i++;out.push(0x3F);continue;}if(cp<0x80){out.push(cp);continue;}const ch=str[i],mapped=SIMP[ch]||ch;const g=GBK[mapped.codePointAt(0)];if(g)out.push(g[0],g[1]);else out.push(0x3F);}return out;}
+function escpos(){
+  const buf=[];const push=(...b)=>b.forEach(x=>buf.push(x));const txt=s=>toGBK(s).forEach(b=>buf.push(b));const raw=s=>{for(let i=0;i<s.length;i++)push(s.charCodeAt(i));};
+  return{init(){push(ESC,0x40,ESC,0x74,0x11);return this;},lf(n=1){for(let i=0;i<n;i++)push(LF);return this;},cut(){push(GS,0x56,0x01);return this;},bold(on){push(ESC,0x45,on?1:0);return this;},big(on){push(ESC,0x21,on?0x30:0x00);return this;},alignC(){push(ESC,0x61,0x01);return this;},alignL(){push(ESC,0x61,0x00);return this;},line(s){txt(s);push(LF);return this;},rawLine(s){raw(s);push(LF);return this;},div(){for(let i=0;i<32;i++)push(0x2D);push(LF);return this;},two(l,r,w=32){const dw=s=>[...s].reduce((n,c)=>n+(c.codePointAt(0)>0x7F?2:1),0);const sp=Math.max(1,w-dw(l)-dw(r));txt(l+' '.repeat(sp)+r);push(LF);return this;},bytes(){return new Uint8Array(buf);}};
+}
+async function btWrite(data){if(!btChar)return false;const wt=btChar.properties.writeWithoutResponse?'writeValueWithoutResponse':'writeValueWithResponse';for(let i=0;i<data.length;i+=20){try{await btChar[wt](data.slice(i,i+20));await new Promise(r=>setTimeout(r,20));}catch(e){return false;}}return true;}
+async function btPrint(){
+  const o=lastOrder;if(!o){toast('無訂單');return;}if(!btConnected||!btChar){toast('請先連接藍牙印表機');return;}
+  try{
+    const t=new Date(o.ts).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+    const ep=escpos().init().alignC().rawLine('Kaz! Car Receipt').big(true).bold(true).rawLine(o.no).bold(false).big(false).rawLine(o.date+' '+t).div().alignL();
+    o.items.forEach(i=>ep.two(i.name+' x'+i.qty,'$'+i.sub,32));
+    ep.div().bold(true).two('Total','$'+o.total,32).bold(false);
+    if(o.paid)ep.two('Paid','$'+o.paid,32).two('Change','$'+o.change,32);
+    if(o.note)ep.rawLine('Note:'+o.note);
+    ep.div().alignC().rawLine('Thank you!').lf(3).cut();
+    const ok=await btWrite(ep.bytes());toast(ok?'✓ 列印成功':'列印失敗');
+  }catch(e){toast('列印錯誤：'+e.message);}
+}
+
+// Load from GAS (shows cached data immediately, then refreshes)
+buildNP();renderProds();renderCart();updBt();updateStoreBtn();
+_loadRemote();
+
+// ── SETTINGS PAGE ────────────────────────────────────────────────────
+function renderSettingsPg() {
+  const cfg = S.settings || {};
+  const si = v => document.getElementById(v);
+  si('s-storename').value = cfg.storeName  || '咔滋餐車';
+  si('s-notehint').value  = cfg.noteHint   || '備註';
+  si('s-announce').value  = cfg.announcementText || '';
+  si('s-enabled').checked = cfg.orderPageEnabled !== false;
+  // Order page URL: GitHub Pages order.html path
+  const base = location.href.replace(/index\.html.*$/, '').replace(/[?#].*$/, '');
+  si('s-orderurl').value = base + 'order.html';
+}
+function saveSettingsPOS() {
+  const si = v => document.getElementById(v);
+  if (!S.settings) S.settings = {};
+  S.settings.storeName    = si('s-storename').value.trim() || '咔滋餐車';
+  S.settings.noteHint     = si('s-notehint').value.trim()  || '備註';
+  S.settings.announcementText = si('s-announce').value.trim();
+  S.settings.orderPageEnabled = si('s-enabled').checked;
+  sv();
+  applySettings(S.settings);
+  toast('設定已儲存');
+}
+function copyOrderUrl() {
+  const el = document.getElementById('s-orderurl');
+  navigator.clipboard.writeText(el.value)
+    .then(()=>toast('已複製預訂連結'))
+    .catch(()=>{ el.select(); document.execCommand('copy'); toast('已複製'); });
+}
+
+</script>
+</body>
+</html>

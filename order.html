@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>線上預訂</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--acc:#e67e22;--acc2:#d35400;--grn:#27ae60;--dark:#2c3e50;--bg:#f5f6fa;--panel:#fff;--t1:#2c3e50;--t2:#5d6d7e;--t3:#95a5a6;--bd:#dde1e7;--r:10px}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;padding-bottom:40px}
+button{cursor:pointer;font-family:'Noto Sans TC',sans-serif;border:none}
+input,textarea,select{font-family:'Noto Sans TC',sans-serif;outline:none;color:var(--t1)}
+
+/* HEADER */
+.hd{background:var(--dark);padding:18px 20px;text-align:center;position:sticky;top:0;z-index:50;box-shadow:0 2px 12px rgba(0,0,0,.25)}
+.hd-logo{font-size:20px;font-weight:700;color:#f39c12}
+.hd-sub{font-size:12px;color:#7f8c8d;margin-top:3px}
+
+.wrap{max-width:560px;margin:0 auto;padding:16px 14px;display:flex;flex-direction:column;gap:14px}
+
+/* ANNOUNCE */
+.announce{background:#fef9f0;border:1.5px solid #f0c27a;border-radius:var(--r);padding:12px 16px;font-size:13px;color:var(--dark);line-height:1.6}
+
+/* SECTION CARD */
+.card{background:var(--panel);border-radius:var(--r);box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden}
+.card-hd{padding:12px 16px;background:var(--dark);font-size:12px;font-weight:700;color:#f39c12;letter-spacing:.8px;text-transform:uppercase}
+
+/* MENU ITEMS */
+.menu-list{padding:8px}
+.mi{display:flex;align-items:center;gap:10px;padding:10px 10px;border-bottom:1px solid var(--bd);transition:.12s}
+.mi:last-child{border-bottom:none}
+.mi:hover{background:#fafafa}
+.mi-info{flex:1}
+.mi-name{font-size:15px;font-weight:500}
+.mi-sold{font-size:11px;color:var(--t3);margin-top:2px}
+.mi-price{font-size:15px;font-weight:700;color:var(--acc);min-width:52px;text-align:right}
+.mi-qty{display:flex;align-items:center;gap:8px;margin-left:8px}
+.qb{width:32px;height:32px;border-radius:6px;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:.1s;border:1.5px solid}
+.qb-m{background:#fde8e8;color:#e74c3c;border-color:#f5c6c6}
+.qb-m:active{background:#e74c3c;color:#fff}
+.qb-p{background:#e8f5e9;color:var(--grn);border-color:#c8e6c9}
+.qb-p:active{background:var(--grn);color:#fff}
+.mi-qty span{font-size:16px;font-weight:700;min-width:26px;text-align:center}
+.mi.zero .mi-name{color:var(--t3)}
+
+/* SUMMARY */
+.summary{padding:12px 16px;display:flex;flex-direction:column;gap:6px}
+.sum-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--t2)}
+.sum-total{display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:2px solid var(--bd);font-size:18px;font-weight:700;color:var(--t1)}
+.sum-total span:last-child{color:var(--acc)}
+
+/* FORM */
+.form-area{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:12px;font-weight:700;color:var(--t2);display:flex;align-items:center;gap:4px}
+.req{color:#e74c3c;font-size:14px}
+.fg input,.fg textarea,.fg select{padding:10px 12px;border:1.5px solid var(--bd);border-radius:6px;font-size:14px;background:#fff;transition:.15s;width:100%}
+.fg input:focus,.fg textarea:focus,.fg select:focus{border-color:var(--acc)}
+.fg .hint{font-size:11px;color:var(--t3);margin-top:2px}
+
+/* SUBMIT */
+.submit-area{padding:0 2px}
+.submit-btn{width:100%;padding:16px;background:var(--grn);color:#fff;border-radius:var(--r);font-size:17px;font-weight:700;box-shadow:0 3px 10px rgba(39,174,96,.35);transition:.15s}
+.submit-btn:active{background:#219a52;transform:scale(.98)}
+.submit-btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* SUCCESS */
+.success{display:none;background:var(--panel);border-radius:var(--r);box-shadow:0 2px 12px rgba(0,0,0,.1);padding:32px 24px;text-align:center;flex-direction:column;align-items:center;gap:12px}
+.success.show{display:flex}
+.success-icon{font-size:56px}
+.success-no{font-size:52px;font-weight:700;color:var(--acc);line-height:1}
+.success-items{width:100%;text-align:left;border:1.5px solid var(--bd);border-radius:8px;overflow:hidden;margin-top:8px}
+.si{display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--bd);font-size:13px}
+.si:last-child{border-bottom:none}
+.success-total{font-size:16px;font-weight:700;display:flex;justify-content:space-between;width:100%;padding-top:4px;border-top:2px solid var(--bd);margin-top:8px}
+.success-email{font-size:12px;color:var(--t3);margin-top:4px}
+.new-order-btn{margin-top:8px;padding:12px 28px;background:var(--acc);color:#fff;border-radius:8px;font-size:15px;font-weight:700}
+
+/* LOADING / ERROR */
+.loading{text-align:center;padding:60px 20px;color:var(--t2);font-size:14px}
+.loading .spinner{width:36px;height:36px;border:3px solid var(--bd);border-top-color:var(--acc);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err{text-align:center;padding:40px 20px;color:#e74c3c;font-size:14px}
+.err-icon{font-size:40px;margin-bottom:8px}
+.disabled-msg{text-align:center;padding:60px 20px;color:var(--t2)}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#2c3e50;color:#fff;padding:10px 22px;border-radius:18px;font-size:13px;z-index:999;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="hd">
+  <div class="hd-logo" id="store-name">載入中...</div>
+  <div class="hd-sub">線上預訂</div>
+</div>
+
+<div class="wrap" id="main-wrap">
+  <div class="loading" id="loading-state">
+    <div class="spinner"></div>
+    <div>載入菜單中...</div>
+  </div>
+</div>
+
+<!-- SUCCESS PAGE -->
+<div class="wrap" id="success-wrap" style="display:none">
+  <div class="success show">
+    <div class="success-icon">🎉</div>
+    <div style="font-size:20px;font-weight:700;color:var(--dark)">預訂成功！</div>
+    <div style="font-size:14px;color:var(--t2)">您的預訂單號</div>
+    <div class="success-no" id="s-no"></div>
+    <div style="font-size:13px;color:var(--grn);font-weight:700" id="s-pickup"></div>
+    <div class="success-items" id="s-items"></div>
+    <div class="success-total"><span>合計</span><span id="s-total"></span></div>
+    <div class="success-email" id="s-email"></div>
+    <button class="new-order-btn" onclick="location.reload()">再次預訂</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG: Set your GAS Web App URL here ─────────────────────────────
+const GAS_URL = ''; // ← 貼上你的 GAS Web App URL
+
+let menuData = null;
+let cart = {}; // {productId: qty}
+
+// ── INIT ──────────────────────────────────────────────────────────────
+window.addEventListener('load', () => { loadMenu(); });
+
+async function loadMenu() {
+  try {
+    const res = await gasCall({ action: 'getPublicMenu' });
+    if (!res.ok) throw new Error(res.error);
+    const d = res.data;
+    if (!d.enabled) {
+      showDisabled(); return;
+    }
+    menuData = d;
+    document.getElementById('store-name').textContent = d.storeName || '線上預訂';
+    document.title = (d.storeName || '線上預訂') + ' — 線上預訂';
+    renderPage(d);
+  } catch(e) {
+    document.getElementById('main-wrap').innerHTML =
+      `<div class="err"><div class="err-icon">⚠</div><div>載入失敗：${e.message}</div><div style="margin-top:12px"><button onclick="location.reload()" style="padding:8px 20px;background:var(--acc);color:#fff;border-radius:6px;font-size:13px">重新載入</button></div></div>`;
+  }
+}
+
+function showDisabled() {
+  document.getElementById('main-wrap').innerHTML =
+    '<div class="disabled-msg"><div style="font-size:40px;margin-bottom:12px">🚫</div><div style="font-size:16px;font-weight:700;color:var(--dark)">線上預訂目前未開放</div><div style="font-size:13px;color:var(--t3);margin-top:8px">請洽詢店家</div></div>';
+}
+
+function renderPage(d) {
+  const wrap = document.getElementById('main-wrap');
+  wrap.innerHTML = '';
+
+  // Announcement
+  if (d.announcementText) {
+    const ann = document.createElement('div');
+    ann.className = 'announce';
+    ann.textContent = d.announcementText;
+    wrap.appendChild(ann);
+  }
+
+  // Menu card
+  const menuCard = document.createElement('div');
+  menuCard.className = 'card';
+  menuCard.innerHTML = '<div class="card-hd">A. 美味預訂</div>';
+  const menuList = document.createElement('div');
+  menuList.className = 'menu-list';
+  menuList.id = 'menu-list';
+  d.products.forEach(p => {
+    const isSoldOut = p.stock > 0 && p.stock <= 0;
+    const div = document.createElement('div');
+    div.className = 'mi' + (isSoldOut ? ' zero' : '');
+    div.id = 'mi-' + p.id;
+    div.innerHTML = `
+      <div class="mi-info">
+        <div class="mi-name">${p.name}</div>
+        ${p.stock > 0 ? `<div class="mi-sold">剩餘 ${p.stock} 份</div>` : ''}
+      </div>
+      <div class="mi-price">$${p.price}</div>
+      <div class="mi-qty">
+        <div class="qb qb-m" onclick="chgQty('${p.id}',-1)">−</div>
+        <span id="qty-${p.id}">0</span>
+        <div class="qb qb-p" onclick="chgQty('${p.id}',1)">+</div>
+      </div>`;
+    menuList.appendChild(div);
+  });
+  menuCard.appendChild(menuList);
+  wrap.appendChild(menuCard);
+
+  // Summary card
+  const sumCard = document.createElement('div');
+  sumCard.className = 'card';
+  sumCard.id = 'sum-card';
+  sumCard.style.display = 'none';
+  sumCard.innerHTML = `<div class="card-hd">B. 選購匯總</div><div class="summary" id="summary-body"></div>`;
+  wrap.appendChild(sumCard);
+
+  // Form card
+  const formCard = document.createElement('div');
+  formCard.className = 'card';
+  formCard.innerHTML = `
+    <div class="card-hd">C. 預訂資料</div>
+    <div class="form-area">
+      <div class="fg">
+        <label>稱呼 <span class="req">*</span></label>
+        <input id="f-name" placeholder="您的姓名或稱呼" autocomplete="name">
+      </div>
+      <div class="fg">
+        <label>電子郵箱 <span class="req">*</span></label>
+        <input id="f-email" type="email" placeholder="example@email.com" autocomplete="email">
+        <div class="hint">確認信將寄送至此信箱</div>
+      </div>
+      <div class="fg">
+        <label>手機末三碼 <span class="req">*</span></label>
+        <input id="f-phone" type="text" maxlength="3" placeholder="例：678" pattern="[0-9]{3}" inputmode="numeric">
+      </div>
+      <div class="fg">
+        <label>${d.noteHint || '備註'}</label>
+        <textarea id="f-note" rows="2" placeholder="${d.noteHint || '備註'}..."></textarea>
+      </div>
+      <div class="fg">
+        <label>取餐時間</label>
+        <input id="f-pickup" type="time">
+        <div class="hint">若無特定時間可留空</div>
+      </div>
+    </div>`;
+  wrap.appendChild(formCard);
+
+  // Submit
+  const submitArea = document.createElement('div');
+  submitArea.className = 'submit-area';
+  submitArea.innerHTML = '<button class="submit-btn" id="submit-btn" onclick="submitOrder()">確認預訂</button>';
+  wrap.appendChild(submitArea);
+}
+
+// ── CART ─────────────────────────────────────────────────────────────
+function chgQty(pid, delta) {
+  if (!cart[pid]) cart[pid] = 0;
+  cart[pid] += delta;
+  // Check stock limit
+  const p = menuData.products.find(x => x.id === pid);
+  if (p && p.stock > 0 && cart[pid] > p.stock) cart[pid] = p.stock;
+  if (cart[pid] < 0) cart[pid] = 0;
+  const el = document.getElementById('qty-' + pid);
+  if (el) el.textContent = cart[pid];
+  updateSummary();
+}
+
+function updateSummary() {
+  const entries = Object.entries(cart).filter(([,q]) => q > 0);
+  const sumCard = document.getElementById('sum-card');
+  if (!entries.length) { if(sumCard) sumCard.style.display='none'; return; }
+  if(sumCard) sumCard.style.display='';
+  let total = 0;
+  let html = '';
+  entries.forEach(([pid, qty]) => {
+    const p = menuData.products.find(x => x.id === pid);
+    if (!p) return;
+    const sub = p.price * qty;
+    total += sub;
+    html += `<div class="sum-row"><span>${p.name} × ${qty}</span><span>$${sub}</span></div>`;
+  });
+  const body = document.getElementById('summary-body');
+  if (body) body.innerHTML = html + `<div class="sum-total"><span>合計</span><span>$${total}</span></div>`;
+}
+
+// ── SUBMIT ───────────────────────────────────────────────────────────
+async function submitOrder() {
+  const entries = Object.entries(cart).filter(([,q]) => q > 0);
+  if (!entries.length) { toast('請先選擇商品'); return; }
+
+  const name  = document.getElementById('f-name').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  const note  = document.getElementById('f-note').value.trim();
+  const pickup= document.getElementById('f-pickup').value;
+
+  if (!name)  { toast('請填寫稱呼'); return; }
+  if (!email || !email.includes('@')) { toast('請填寫有效的電子郵箱'); return; }
+  if (!/^\d{3}$/.test(phone)) { toast('請填寫手機末三碼（3位數字）'); return; }
+
+  const items = entries.map(([pid, qty]) => {
+    const p = menuData.products.find(x => x.id === pid);
+    return { pid, name: p.name, price: p.price, qty, sub: p.price * qty };
+  });
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = '送出中...';
+
+  try {
+    const res = await gasCall({
+      action: 'submitPublicOrder',
+      data: { items, customerName:name, customerEmail:email, customerPhone:phone, note, pickup },
+    });
+    if (!res.ok) throw new Error(res.error || '送出失敗，請重試');
+    showSuccess(res, items, email, pickup);
+  } catch(e) {
+    toast('錯誤：' + e.message, 5000);
+    btn.disabled = false;
+    btn.textContent = '確認預訂';
+  }
+}
+
+function showSuccess(res, items, email, pickup) {
+  document.getElementById('main-wrap').style.display = 'none';
+  document.getElementById('success-wrap').style.display = 'flex';
+  document.getElementById('s-no').textContent = res.no;
+  document.getElementById('s-pickup').textContent = pickup ? '取餐時間：' + pickup : '';
+  let html = '';
+  items.forEach(i => { html += `<div class="si"><span>${i.name} × ${i.qty}</span><span>$${i.sub}</span></div>`; });
+  document.getElementById('s-items').innerHTML = html;
+  document.getElementById('s-total').textContent = '$' + res.total;
+  document.getElementById('s-email').textContent = '確認信已寄送至 ' + email;
+}
+
+// ── GAS API call ─────────────────────────────────────────────────────
+async function gasCall(body) {
+  if (!GAS_URL) throw new Error('GAS_URL 尚未設定，請聯繫管理員');
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    mode: 'no-cors', // GAS CORS workaround
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(body),
+  });
+  // no-cors mode: response is opaque, we can't read it directly
+  // Use a different approach: redirect mode
+  throw new Error('請改用 redirect 模式，見說明文件');
+}
+
+// ── Better GAS API: use fetch with CORS proxy or URLSearchParams ──────
+// Overwrite gasCall with a working implementation
+async function gasCall(body) {
+  if (!GAS_URL) throw new Error('請先在 order.html 設定 GAS_URL');
+  // GAS supports GET with parameters for simple reads,
+  // and POST with text/plain for writes
+  const url = GAS_URL;
+  const response = await fetch(url, {
+    method:  'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body:    JSON.stringify(body),
+    redirect:'follow',
+  });
+  const text = await response.text();
+  // Find JSON in response (GAS sometimes wraps with HTML on redirect)
+  const match = text.match(/\{.*\}/s);
+  if (!match) throw new Error('伺服器回應格式錯誤');
+  return JSON.parse(match[0]);
+}
+
+function toast(msg, dur) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur || 2800);
+}
+</script>
+</body>
+</html>
